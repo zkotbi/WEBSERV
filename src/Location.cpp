@@ -1,6 +1,7 @@
 
 #include "Location.hpp"
 #include <fcntl.h>
+#include <sys/_types/_s_ifmt.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <unistd.h>
@@ -87,6 +88,7 @@ void Location::setCGI(Tokens &token, Tokens &end)
 {
 	std::string cgi_path;
 	std::string cgi_ext;
+	struct stat buf;
 
 	this->globalConfig.validateOrFaild(token, end);
 	cgi_ext = this->globalConfig.consume(token, end);
@@ -96,8 +98,13 @@ void Location::setCGI(Tokens &token, Tokens &end)
 		throw Tokenizer::ParserException("invalid CGI ext " + cgi_ext);
 	if (cgi_path[0] != '/')
 		throw Tokenizer::ParserException("Invalid CGI path " + cgi_path + ": " + "path need to be absolute path");
-	else if (access(cgi_path.c_str(), F_OK | X_OK | R_OK) == -1)
+	int r = stat(cgi_path.data(), &buf);
+	if (r != 0)
 		throw Tokenizer::ParserException("Invalid CGI path " + cgi_path + ": " + std::string(strerror(errno)));
+	else if (S_ISDIR(buf.st_mode))
+		throw Tokenizer::ParserException("Invalid CGI path " + cgi_path);
+	else if (!(buf.st_mode & S_IXUSR))
+		throw Tokenizer::ParserException("Invalid CGI path " + cgi_path+ " : not executable");
 	this->cgiMap[cgi_ext] = cgi_path;
 }
 
