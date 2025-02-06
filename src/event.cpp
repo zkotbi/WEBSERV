@@ -39,6 +39,8 @@ Event::Event(int max_connection, int max_events, ServerContext *ctx)
 Event::~Event()
 {
 	delete this->evList;
+	delete this->eventChangeList;
+
 	VirtualServerMap_t::iterator it = this->virtuaServers.begin();
 	for (; it != this->virtuaServers.end(); it++)
 		close(it->first);
@@ -47,6 +49,12 @@ Event::~Event()
 	{
 		if (this->virtuaServers.find(it->first) == this->virtuaServers.end())
 			close(it2->first);
+	}
+	ProcMap_t::iterator kv = this->procs.end();
+	for (; kv != this->procs.end();kv++)
+	{
+		kv->second.die();
+		kv->second.clean();
 	}
 	if (this->kqueueFd >= 0)
 		close(this->kqueueFd);
@@ -159,10 +167,7 @@ int Event::CreateSocket(SocketAddrSet_t::iterator &address)
 
 int Event::setNonBlockingIO(int sockfd, bool sockserver)
 {
-	int flags = fcntl(sockfd, F_GETFL, 0);
-	if (flags == -1)
-		return (-1);
-	if (fcntl(sockfd, F_SETFL, flags | O_NONBLOCK | FD_CLOEXEC) < 0) // may faild
+	if (fcntl(sockfd, F_SETFL, O_NONBLOCK | FD_CLOEXEC) < 0)
 		return (-1);
 	if (sockserver)
 		return (0);
