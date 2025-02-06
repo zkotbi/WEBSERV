@@ -11,10 +11,10 @@ Connections::Connections(ServerContext *ctx, int kqueueFd) : ctx(ctx), kqueueFd(
 
 Connections::~Connections()
 {
-	// for (ClientsIter it = clients.begin(); it != clients.end(); ++it)
-	// {
-	// 	delete it->second;
-	// }
+	for (ClientsIter it = clients.begin(); it != clients.end(); ++it)
+	{
+		close(it->first);
+	}
 }
 
 void Connections::closeConnection(int fd)
