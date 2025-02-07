@@ -11,8 +11,8 @@
 
 #include <cstring>
 
-#define MAX_EVENTS 32
-#define MAX_CONNECTIONS_QUEUE 256
+#define MAX_EVENTS 128
+#define MAX_CONNECTIONS_QUEUE 128
 #define CONF_FILE_PATH "webserv.conf"
 
 ServerContext *LoadConfig(const char *path)
@@ -41,7 +41,7 @@ static void ctrl_c(int )
 }
 
 
-void leak() {system("lsof -c webserv && leaks webserv");}
+// void leak() {system("lsof -c webserv && leaks webserv");}
 
 static void handelSignal()
 {
@@ -52,7 +52,7 @@ static void handelSignal()
 int main(int ac, char **argv)
 {
 
-	atexit(leak);
+	// atexit(leak);
 
 	handelSignal();
 	ServerContext *ctx = NULL;

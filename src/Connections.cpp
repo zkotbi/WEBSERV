@@ -17,7 +17,7 @@ Connections::~Connections()
 	}
 }
 
-void Connections::closeConnection(int fd)
+void log(const std::string &str)
 {
 	time_t now = time(NULL);
 	struct tm *timeinfo = localtime(&now);
@@ -32,29 +32,19 @@ void Connections::closeConnection(int fd)
 	   << (1900 + timeinfo->tm_year) << "]";
 	std::cout << green;
 	std::cout << ss.str() << " ";
-	std::cout << "client disconnect\n";
-	std::cout << _reset;
+	std::cout << str;
+	std::cout << _reset << "\n";
+}
+void Connections::closeConnection(int fd)
+{
+	// log("client disconnected");
 	close(fd); // after close  fd all event will be clear
 	clients.erase(fd);
 }
 
 void Connections::addConnection(int fd, int server)
 {
-	time_t now = time(NULL);
-	struct tm *timeinfo = localtime(&now);
-
-	std::stringstream ss;
-	const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-
-	const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-	ss << "[" << days[timeinfo->tm_wday] << " " << months[timeinfo->tm_mon] << " " << std::setfill('0') << std::setw(2)
-	   << timeinfo->tm_mday << " " << std::setfill('0') << std::setw(2) << timeinfo->tm_hour << ":" << std::setfill('0')
-	   << std::setw(2) << timeinfo->tm_min << ":" << std::setfill('0') << std::setw(2) << timeinfo->tm_sec << " "
-	   << (1900 + timeinfo->tm_year) << "]";
-	std::cout << green;
-	std::cout << ss.str() << " ";
-	std::cout << "new client connect\n";
-	std::cout << _reset;
+	// log("client connect");
 	this->clients.insert(std::make_pair(fd, Client(fd, server, this->ctx)));
 }
 

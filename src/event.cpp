@@ -255,7 +255,7 @@ void Event::setWriteEvent(Client *client, uint16_t flags)
 	if (client->writeEventState == flags)
 		return;
 	struct kevent ev;
-	EV_SET(&ev, client->getFd(), EVFILT_WRITE, flags, 0, 0, NULL);
+	EV_SET(&ev, client->getFd(), EVFILT_WRITE, EV_ADD | flags, 0, 0, NULL);
 	if (kevent(this->kqueueFd, &ev, 1, NULL, 0, NULL) < 0)
 		throw Event::EventExpection("kevent faild:" + std::string(strerror(errno)));
 	client->writeEventState = flags;
@@ -270,7 +270,7 @@ void Event::ReadEvent(const struct kevent *ev)
 		Client *client = connections.requestHandler(ev->ident, ev->data);
 		if (!client)
 			return;
-		while (!client->request.eof && client->request.state != REQ_ERROR) // whats is header does not arrive fully ?
+		while (!client->request.eof && client->request.state != REQ_ERROR) 
 		{
 			client->request.feed();
 			if (!client->request.data.back()->isRequestLineValidated() && client->request.state == BODY)
