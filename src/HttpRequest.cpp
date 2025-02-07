@@ -142,6 +142,7 @@ int HttpRequest::checkMultiPartEnd()
 	{
 		data.back()->bodyHandler.uploadStream->write(border.c_str(), data.back()->bodyHandler.borderIt);
 		data.back()->bodyHandler.uploadStream->flush();
+		data.back()->bodyHandler.uploadStream->close();
 		delete data.back()->bodyHandler.uploadStream;
 		data.back()->bodyHandler.uploadStream = NULL;
 	}
@@ -763,6 +764,7 @@ int BodyHandler::openNewFile(std::string uploadPath)
 	if (uploadStream != NULL)
 	{
 		uploadStream->flush();
+		uploadStream->close();
 		delete uploadStream;
 	}
 	uploadStream = new std::ofstream(fileName.c_str());
@@ -828,6 +830,7 @@ void HttpRequest::handleStoring()
 				if (bodyHandler.uploadStream != NULL)
 				{
 					bodyHandler.uploadStream->flush();
+					bodyHandler.uploadStream->close();
 					delete bodyHandler.uploadStream;
 					bodyHandler.created = 1;
 				}
@@ -868,6 +871,7 @@ void HttpRequest::handleStoring()
 				{
 					bodyHandler.created = 1;
 					bodyHandler.uploadStream->flush();
+					bodyHandler.uploadStream->close();
 					delete bodyHandler.uploadStream;
 					// close(bodyHandler.currFd);
 				}
@@ -979,11 +983,13 @@ BodyHandler::~BodyHandler()
 	if (bodyFstream != NULL)
 	{
 		bodyFstream->flush();
+		bodyFstream->close();
 		delete bodyFstream;
 	}
 	if (uploadStream != NULL)
 	{
 		uploadStream->flush();
+		uploadStream->close();
 		delete uploadStream;
 	}
 }
