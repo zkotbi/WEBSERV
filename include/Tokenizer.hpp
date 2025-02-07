@@ -21,7 +21,6 @@ class Tokenizer
 			std::string message;
 
 		public:
-			// ~ParserException();
 			ParserException(std::string msg) ;
 			ParserException();
 			~ParserException() throw();

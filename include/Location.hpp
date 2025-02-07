@@ -56,6 +56,6 @@ class Location
 		const std::string &getCGIPath(const std::string &ext);
 		const std::string &geCGIext();
 		void setCGI(Tokens &token, Tokens &end);
-		const std::string &getFileUploadPath();//INFO:uploded file
+		const std::string &getFileUploadPath();
 };
 #endif

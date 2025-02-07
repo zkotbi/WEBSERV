@@ -111,7 +111,7 @@ void Location::setCGI(Tokens &token, Tokens &end)
 const std::string &Location::getCGIPath(const std::string &ext)
 {
 	std::map<std::string, std::string>::iterator kv;
-	kv = this->cgiMap.find(ext); //
+	kv = this->cgiMap.find(ext); 
 	if (kv == this->cgiMap.end())
 		return (this->cgiMap.find(".")->second);
 	return (kv->second);
@@ -144,7 +144,7 @@ long Location::getMaxBody() const
 }
 bool Location::isMethodAllowed(int method) const
 {
-	return ((this->methods & method) != 0); // TODO: TEST
+	return ((this->methods & method) != 0);
 }
 
 void Location::setMethods(Tokens &token, Tokens &end)

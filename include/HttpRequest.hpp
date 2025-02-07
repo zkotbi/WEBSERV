@@ -91,7 +91,6 @@ struct BodyHandler
 
 	std::map<std::string, std::string> headers;
 
-	// int bodyFd;
 	std::ofstream*  uploadStream;
 	std::ofstream*  bodyFstream;
 
@@ -108,7 +107,6 @@ struct BodyHandler
 	bool created;
 	bool isBodyInit;
 
-	// int currFd;
 
 	size_t fileBodyIt;
 	size_t borderIt;

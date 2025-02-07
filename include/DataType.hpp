@@ -48,7 +48,7 @@ class GlobalConfig
 
 	public:
 
-		bool isValidStatusCode(std::string &str); // WARNING:t5arbi9
+		bool isValidStatusCode(std::string &str); 
 		void setMethods(Tokens &token, Tokens &end);
 		void setAlias(Tokens &token, Tokens &end);
 		void validateOrFaild(Tokens &token, Tokens &end);

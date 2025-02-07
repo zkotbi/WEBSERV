@@ -614,7 +614,7 @@ void HttpRequest::contentLengthBodyParsing()
 		body.insert(
 			body.begin(),
 			reqBuffer.begin() + reqBufferIndex,
-			reqBuffer.begin() + reqBufferSize); // WARNING : double check
+			reqBuffer.begin() + reqBufferSize); 
 	else
 		body.insert(
 			body.begin(),
@@ -873,7 +873,6 @@ void HttpRequest::handleStoring()
 					bodyHandler.uploadStream->flush();
 					bodyHandler.uploadStream->close();
 					delete bodyHandler.uploadStream;
-					// close(bodyHandler.currFd);
 				}
 				bodyHandler.uploadStream = NULL;
 				return;

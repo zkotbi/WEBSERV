@@ -708,12 +708,6 @@ void HttpResponse::responseCooking()
 			writeResponse();
 		if (methode == DELETE)
 			deleteMethodeHandler();
-		// if (bodyType == LOAD_FILE)
-		// {
-		// 	this->responseFd = open(fullPath.c_str(), O_RDONLY | O_NONBLOCK);
-		// 	if (responseFd < 0)
-		// 		setHttpResError(500, "Internal Server Error");
-		// }
 	}
 }
 

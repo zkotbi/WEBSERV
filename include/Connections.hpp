@@ -5,7 +5,7 @@
 #include "ServerContext.hpp"
 #include <map>
 
-typedef std::map<int, Client>::iterator ClientsIter; // WARNING 
+typedef std::map<int, Client>::iterator ClientsIter;
 
 class Connections 
 {
