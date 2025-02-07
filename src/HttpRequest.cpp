@@ -117,7 +117,6 @@ void HttpRequest::readRequest(int data)
 		throw HttpResponse::IOException();
 	if (size == 0)
 		return;
-	// storeRequestData(reqBuffer, state, size);
 	this->reqBufferSize = size;
 	reqBufferIndex = 0;
 }
@@ -135,21 +134,17 @@ void HttpRequest::andNew()
 int HttpRequest::checkMultiPartEnd()
 {
 	std::string border = "\r\n--" + bodyBoundary + "--\r\n";
+	if (data.back()->bodyHandler.bodyFstream != NULL)
+		data.back()->bodyHandler.bodyFstream->flush();
 	if (reqBody != MULTI_PART || data.back()->bodyHandler.isCgi)
 		return (1);
 	if (data.back()->bodyHandler.uploadStream != NULL)
 	{
 		data.back()->bodyHandler.uploadStream->write(border.c_str(), data.back()->bodyHandler.borderIt);
+		data.back()->bodyHandler.uploadStream->flush();
 		delete data.back()->bodyHandler.uploadStream;
 		data.back()->bodyHandler.uploadStream = NULL;
 	}
-	// if (data.back()->bodyHandler.currFd >= 0
-	// 	&& write(data.back()->bodyHandler.currFd, border.c_str(), data.back()->bodyHandler.borderIt) < 0)
-	// {
-	// 	setHttpReqError(500, "Internal Server Error");
-	// 	bodyState = _ERROR;
-	// 	return (0);
-	// }
 	if (data.back()->bodyHandler.tmp != "\r\n--" + bodyBoundary + "--\r\n")
 	{
 		setHttpReqError(400, "Bad Request");
@@ -766,13 +761,13 @@ int BodyHandler::openNewFile(std::string uploadPath)
 	fileName = uploadPath;
 	fileName += header.substr(pos, header.find('\"', pos) - pos);
 	if (uploadStream != NULL)
+	{
+		uploadStream->flush();
 		delete uploadStream;
+	}
 	uploadStream = new std::ofstream(fileName.c_str());
 	if (!uploadStream->is_open())
 		return (1);
-	// currFd = open(fileName.c_str(), O_CREAT | O_RDWR, 0644);
-	// if (currFd < 0)
-	// 	return (1);
 	return (created = 1, 0);
 }
 
@@ -822,8 +817,6 @@ void HttpRequest::handleStoring()
 			{
 				if (bodyHandler.uploadStream != NULL)
 					bodyHandler.uploadStream->write(border.c_str(), bodyHandler.borderIt);
-				// if (bodyHandler.currFd >= 0 && write(bodyHandler.currFd, border.c_str(), bodyHandler.borderIt) < 0)
-				// 	return (bodyState = _ERROR, setHttpReqError(500, "Internal Server Error"));
 				break;
 			}
 			bodyHandler.borderIt++;
@@ -834,6 +827,7 @@ void HttpRequest::handleStoring()
 				data.back()->bodyHandler.header.clear();
 				if (bodyHandler.uploadStream != NULL)
 				{
+					bodyHandler.uploadStream->flush();
 					delete bodyHandler.uploadStream;
 					bodyHandler.created = 1;
 				}
@@ -864,17 +858,17 @@ void HttpRequest::handleStoring()
 			if (border.size() == bodyHandler.borderIt)
 			{
 				size_t nbuff = it - (body.begin() - pos);
-				// if (bodyHandler.currFd >= 0 && write(bodyHandler.currFd, &body.data()[bodyHandler.bodyIt], nbuff) < 0)
-				// 	return (bodyState = _ERROR, setHttpReqError(500, "Internal Server Error"));
 				if (bodyHandler.uploadStream != NULL)
 						bodyHandler.uploadStream->write(&body.data()[bodyHandler.bodyIt], nbuff);
 				bodyHandler.bodyIt += nbuff + border.size();
 				bodyState = MULTI_PART_HEADERS;
 				data.back()->bodyHandler.header.clear();
 				bodyHandler.borderIt = 0;
-				if (bodyHandler.uploadStream == NULL)
+				if (bodyHandler.uploadStream != NULL)
 				{
 					bodyHandler.created = 1;
+					bodyHandler.uploadStream->flush();
+					delete bodyHandler.uploadStream;
 					// close(bodyHandler.currFd);
 				}
 				bodyHandler.uploadStream = NULL;
@@ -886,8 +880,6 @@ void HttpRequest::handleStoring()
 	}
 	if (bodyHandler.uploadStream != NULL)
 	{
-		// if (write(bodyHandler.currFd, &body.data()[bodyHandler.bodyIt], body.size() - bodyHandler.bodyIt - bodyHandler.borderIt) < 0)
-		// 	return (bodyState = _ERROR, setHttpReqError(500, "Internal Server Error"));
 		bodyHandler.uploadStream->write(&body.data()[bodyHandler.bodyIt], body.size() - bodyHandler.bodyIt - bodyHandler.borderIt);
 		bodyHandler.bodyIt += body.size() - bodyHandler.bodyIt;
 	}
@@ -949,14 +941,8 @@ int BodyHandler::writeChunkedBody()
 		bodyFstream = new std::ofstream(bodyFile.c_str());
 	if (!bodyFstream->is_open())
 		return (0);
-	// if (bodyFd < 0)
-	// 	bodyFd = open(bodyFile.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0644);
-	// if (bodyFd < 0)
-	// 	return (0);
 	bodyFstream->write(chunkeBody.data(), chunkeBody.size());
 
-	// if (write(bodyFd, chunkeBody.data(), chunkeBody.size()) < 0)
-	// 	return (0);
 	bodySize += chunkeBody.size();
 	bodyIt = 0;
 	chunkeBody.clear();
@@ -970,12 +956,6 @@ int BodyHandler::writeBody()
 	if (!bodyFstream->is_open())
 		return (0);
 	bodyFstream->write(body.data(), body.size());
-	// if (bodyFd < 0)
-	// 	bodyFd = open(bodyFile.c_str(), O_CREAT | O_TRUNC | O_RDWR, 0644);
-	// if (bodyFd < 0)
-	// 	return (0);
-	// if (write(bodyFd, body.data(), body.size()) < 0)
-	// 	return (0);
 	bodyIt = 0;
 	return (1);
 }
@@ -997,9 +977,15 @@ BodyHandler::BodyHandler() : bodyFstream(NULL), body(BUFFER_SIZE), fileBody(BUFF
 BodyHandler::~BodyHandler()
 {
 	if (bodyFstream != NULL)
+	{
+		bodyFstream->flush();
 		delete bodyFstream;
+	}
 	if (uploadStream != NULL)
+	{
+		uploadStream->flush();
 		delete uploadStream;
+	}
 }
 
 void HttpRequest::decodingUrl()
