@@ -9,7 +9,7 @@ OBJ		= $(SRC:.cpp=.o)
 
 CC		= c++
 
-CFLAGS	= -std=c++98 -Wall -Wextra  -Werror -O3 -Ofast
+CFLAGS	= -std=c++98 -Wall -Wextra  -Werror
 
 INC		= include/CGIProcess.hpp include/Client.hpp\
 		  include/Connections.hpp include/DataType.hpp \
