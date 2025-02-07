@@ -41,7 +41,7 @@ static void ctrl_c(int )
 }
 
 
-// void leak() {system("lsof -c webserv && leaks webserv");}
+void leak() {system("lsof -c webserv && leaks webserv");}
 
 static void handelSignal()
 {
@@ -52,7 +52,7 @@ static void handelSignal()
 int main(int ac, char **argv)
 {
 
-	// atexit(leak);
+	atexit(leak);
 
 	handelSignal();
 	ServerContext *ctx = NULL;

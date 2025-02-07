@@ -37,14 +37,14 @@ void log(const std::string &str)
 }
 void Connections::closeConnection(int fd)
 {
-	// log("client disconnected");
+	log("client disconnected");
 	close(fd); // after close  fd all event will be clear
 	clients.erase(fd);
 }
 
 void Connections::addConnection(int fd, int server)
 {
-	// log("client connect");
+	log("client connect");
 	this->clients.insert(std::make_pair(fd, Client(fd, server, this->ctx)));
 }
 

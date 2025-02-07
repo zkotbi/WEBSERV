@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <algorithm>
+#include <cassert>
 #include <cerrno>
 #include <cstddef>
 #include <cstdio>
@@ -257,7 +258,7 @@ void Event::setWriteEvent(Client *client, uint16_t flags)
 	struct kevent ev;
 	EV_SET(&ev, client->getFd(), EVFILT_WRITE, EV_ADD | flags, 0, 0, NULL);
 	if (kevent(this->kqueueFd, &ev, 1, NULL, 0, NULL) < 0)
-		throw Event::EventExpection("kevent faild:" + std::string(strerror(errno)));
+		throw Event::EventExpection("kevent : client write event :" );
 	client->writeEventState = flags;
 }
 
@@ -309,10 +310,8 @@ int Event::RegisterNewProc(Client *client)
 	EV_SET(&ev[2], proc.fout, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *)(size_t)proc.pid);
 	if (kevent(this->kqueueFd, ev, evSize, 0, 0, NULL) < 0)
 	{
-		proc.clean();
 		proc.die();
-		response.setHttpResError(502, "Bad Gateway");
-		return (-1);
+		throw Event::EventExpection("Kevent: CGI process: ");
 	}
 	client->cgi_pid = proc.pid;
 	proc.client = client->getFd();
@@ -372,9 +371,8 @@ void Event::WriteEvent(const struct kevent *ev)
 void Event::ReadPipe(const struct kevent *ev)
 {
 	const char seq[4] = {'\r', '\n', '\r', '\n'};
-
-	if (ev->flags & EV_EOF && !ev->data)
-		return (void)close(ev->ident);
+	if ((ev->flags & EV_EOF) && ev->data == 0)
+		return;
 	ProcMap_t::iterator p = this->procs.find((size_t)ev->udata);
 	Proc &proc = p->second;
 	Client *client = this->connections.getClient(proc.client);
@@ -390,7 +388,7 @@ void Event::ReadPipe(const struct kevent *ev)
 	if (proc.outToFile)
 	{
 		if (proc.writeBody(proc.buffer.data(), read_size) < 0)
-			return response->setHttpResError(500, "Internal server Error"), proc.die(); // kill cgi
+			return proc.die(); // kill cgi
 		return;
 	}
 	else if (read_size < 4)
@@ -590,12 +588,12 @@ void Event::KeepAlive(Client *client)
 		this->ctx->getKeepAliveTime(),
 		NULL);
 	if (kevent(this->kqueueFd, &ev, 1, NULL, 0, NULL) < 0)
-		throw Event::EventExpection("kevent : Timer: " + std::string(strerror(errno)));
+		throw Event::EventExpection("kevent : client Timer: ");
 }
 
 Event::EventExpection::EventExpection(const std::string &msg) throw()
 {
-	this->msg = msg;
+	this->msg = msg + strerror(errno);
 }
 
 const char *Event::EventExpection::what() const throw()

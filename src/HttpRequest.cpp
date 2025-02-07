@@ -142,6 +142,7 @@ int HttpRequest::checkMultiPartEnd()
 	{
 		data.back()->bodyHandler.uploadStream->write(border.c_str(), data.back()->bodyHandler.borderIt);
 		data.back()->bodyHandler.uploadStream->flush();
+		data.back()->bodyHandler.uploadStream->close();
 		delete data.back()->bodyHandler.uploadStream;
 		data.back()->bodyHandler.uploadStream = NULL;
 	}
@@ -763,6 +764,7 @@ int BodyHandler::openNewFile(std::string uploadPath)
 	if (uploadStream != NULL)
 	{
 		uploadStream->flush();
+		uploadStream->close();
 		delete uploadStream;
 	}
 	uploadStream = new std::ofstream(fileName.c_str());
@@ -790,7 +792,7 @@ void HttpRequest::handleMultiPartHeaders()
 			if (tmp)
 			{
 				if (tmp == 2)
-					setHttpReqError(400, "Bad Request");
+					setHttpReqError(501, "Not Implemented");
 				if (tmp == 1)
 					setHttpReqError(500, "Internal Server Error");
 				bodyState = _ERROR;
@@ -828,6 +830,7 @@ void HttpRequest::handleStoring()
 				if (bodyHandler.uploadStream != NULL)
 				{
 					bodyHandler.uploadStream->flush();
+					bodyHandler.uploadStream->close();
 					delete bodyHandler.uploadStream;
 					bodyHandler.created = 1;
 				}
@@ -868,6 +871,7 @@ void HttpRequest::handleStoring()
 				{
 					bodyHandler.created = 1;
 					bodyHandler.uploadStream->flush();
+					bodyHandler.uploadStream->close();
 					delete bodyHandler.uploadStream;
 					// close(bodyHandler.currFd);
 				}
@@ -942,7 +946,6 @@ int BodyHandler::writeChunkedBody()
 	if (!bodyFstream->is_open())
 		return (0);
 	bodyFstream->write(chunkeBody.data(), chunkeBody.size());
-
 	bodySize += chunkeBody.size();
 	bodyIt = 0;
 	chunkeBody.clear();
@@ -956,6 +959,7 @@ int BodyHandler::writeBody()
 	if (!bodyFstream->is_open())
 		return (0);
 	bodyFstream->write(body.data(), body.size());
+	bodyFstream->flush();
 	bodyIt = 0;
 	return (1);
 }
@@ -979,11 +983,13 @@ BodyHandler::~BodyHandler()
 	if (bodyFstream != NULL)
 	{
 		bodyFstream->flush();
+		bodyFstream->close();
 		delete bodyFstream;
 	}
 	if (uploadStream != NULL)
 	{
 		uploadStream->flush();
+		uploadStream->close();
 		delete uploadStream;
 	}
 }

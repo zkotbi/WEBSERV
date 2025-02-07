@@ -122,18 +122,17 @@ void CGIProcess::child_process()
 			throw CGIProcess::ChildException();
 		}
 		execve(*args, (char *const *)args, envp);
+		throw CGIProcess::ChildException();
 	}
 	catch (std::exception &e)
 	{
 		throw CGIProcess::ChildException();
 	}
-	throw CGIProcess::ChildException();
 }
 
 Proc CGIProcess::RunCGIScript(HttpResponse &response)
 {
 	Proc proc;
-
 	this->response = &response;
 	if (this->IsFileExist())
 		return (proc);

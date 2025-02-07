@@ -39,8 +39,8 @@ ServerContext::ServerContext() : globalConfig(0, "/tmp")
 	};
 	for (size_t i = 0; i < sizeof(types) / sizeof(types[0]); i++)
 		this->types[ext[i]] = types[i];
-	this->keepAliveTimeout = 75; // second
-	this->CGITimeOut = 75;
+	this->keepAliveTimeout = 75;
+	this->CGITimeOut = 13;
 }
 
 ServerContext::~ServerContext()

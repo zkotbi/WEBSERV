@@ -9,6 +9,7 @@
 #include <sys/unistd.h>
 #include <unistd.h>
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <cerrno>
 #include <cstddef>
@@ -222,29 +223,29 @@ void HttpResponse::write2client(int fd, const char *str, size_t size)
 }
 void HttpResponse::logResponse() const
 {
-	// time_t now = time(NULL);
+	time_t now = time(NULL);
 
-	// struct tm *timeinfo = localtime(&now);
+	struct tm *timeinfo = localtime(&now);
 
-	// std::stringstream ss;
-	// const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+	std::stringstream ss;
+	const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-	// const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-	// ss << "[" << days[timeinfo->tm_wday] << " " << months[timeinfo->tm_mon] << " " << std::setfill('0') << std::setw(2)
-	//    << timeinfo->tm_mday << " " << std::setfill('0') << std::setw(2) << timeinfo->tm_hour << ":" << std::setfill('0')
-	//    << std::setw(2) << timeinfo->tm_min << ":" << std::setfill('0') << std::setw(2) << timeinfo->tm_sec << " "
-	//    << (1900 + timeinfo->tm_year) << "]";
-	// if (this->status.code < 300)
-	// 	std::cout << green;
-	// else if (this->status.code < 400)
-	// 	std::cout << yellow;
-	// else
-	// 	std::cout << red;
+	const char *days[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+	ss << "[" << days[timeinfo->tm_wday] << " " << months[timeinfo->tm_mon] << " " << std::setfill('0') << std::setw(2)
+	   << timeinfo->tm_mday << " " << std::setfill('0') << std::setw(2) << timeinfo->tm_hour << ":" << std::setfill('0')
+	   << std::setw(2) << timeinfo->tm_min << ":" << std::setfill('0') << std::setw(2) << timeinfo->tm_sec << " "
+	   << (1900 + timeinfo->tm_year) << "]";
+	if (this->status.code < 300)
+		std::cout << green;
+	else if (this->status.code < 400)
+		std::cout << yellow;
+	else
+		std::cout << red;
 
-	// std::cout << ss.str() << " ";
-	// std::cout << "HTTP/1.1 " << this->strMethod << " " << this->path << " " << this->status.code << " "
-	// 		  << this->status.description << "\n";
-	// std::cout << _reset;
+	std::cout << ss.str() << " ";
+	std::cout << "HTTP/1.1 " << this->strMethod << " " << this->path << " " << this->status.code << " "
+			  << this->status.description << "\n";
+	std::cout << _reset;
 }
 
 HttpResponse::IOException::~IOException() throw() {}
@@ -315,60 +316,10 @@ bool HttpResponse::isCgi()
 {
 	return (this->isCgiBool);
 }
-#include <iostream>
-#include <execinfo.h>
-#include <cxxabi.h>
-#include <dlfcn.h>
-#include <vector>
-#include <string>
-std::string demangle(const char* mangled_name) {
-    int status;
-    char* demangled = abi::__cxa_demangle(mangled_name, nullptr, nullptr, &status);
-    
-    if (status == 0) {
-        std::string result(demangled);
-        free(demangled);
-        return result;
-    }
-    
-    return mangled_name ? mangled_name : "Unknown";
-}
 
-void print_stack_trace(int skip_frames = 1) {
-    void* callstack[128];
-    int frames = backtrace(callstack, 128);
-    char** symbols = backtrace_symbols(callstack, frames);
-    
-    std::cerr << "Stack Trace (" << frames - skip_frames << " frames):\n";
-    
-    for (int i = skip_frames; i < frames; ++i) {
-        Dl_info info;
-        if (dladdr(callstack[i], &info)) {
-            std::string function_name = demangle(info.dli_sname ? info.dli_sname : "");
-            
-            std::cerr << "#" << (i - skip_frames) << ": ";
-            
-            if (!function_name.empty()) {
-                std::cerr << function_name << " ";
-            }
-            
-            if (info.dli_fname) {
-                std::cerr << "in " << info.dli_fname;
-            }
-            
-            std::cerr << " [" << callstack[i] << "]\n";
-        } else {
-            std::cerr << "#" << (i - skip_frames) << ": " << symbols[i] << "\n";
-        }
-    }
-    
-    free(symbols);
-}
 void HttpResponse::setHttpResError(int code, const std::string &str)
 {
 	state = ERROR;
-	std::cerr << code << "\n";
-	print_stack_trace();
 	status.code = code;
 	status.description = str;
 	keepAlive = 0;
@@ -501,24 +452,12 @@ int HttpResponse::parseCgistatus()
 	return (1);
 }
 
-static int vecIsPrint(const std::vector<char> &vec)
-{
-	for (size_t i = 0; i < vec.size(); i++)
-	{
-		if (!std::isprint(vec[i]) && vec[i] != '\r' && vec[i] != '\n')
-			return (0);
-	}
-	return (1);
-}
-
 void HttpResponse::parseCgiOutput()
 {
 	std::string headers(CGIOutput.data(), CGIOutput.size());
 	size_t pos = headers.find("\n");
 	size_t strIt = 0;
 
-	if (!vecIsPrint(CGIOutput))
-		return setHttpResError(502, "Bad Gateway");
 	if (CGIOutput.size() == 0 || headers.find("\r\n\r\n") == std::string::npos)
 		return setHttpResError(502, "Bad Gateway");
 	while (pos != std::string::npos)

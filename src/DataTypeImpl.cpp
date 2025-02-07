@@ -277,7 +277,8 @@ void Proc::clean()
 		close(this->output_fd);
 	this->fout = -1;
 	this->output_fd = -1;
-	// std::remove(this->input.data());
+	std::remove(this->input.data());
+	this->input.clear();
 }
 
 std::string Proc::mktmpfileName()
